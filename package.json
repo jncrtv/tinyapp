@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/jncrtv/tinyapp/issues"
   },
-  "homepage": "https://github.com/jncrtv/tinyapp#readme"
+  "homepage": "https://github.com/jncrtv/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
