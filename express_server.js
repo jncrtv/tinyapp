@@ -61,6 +61,14 @@ app.post("/urls", (req, res) => {
   
 });
 
+app.post("/urls/:shortURL/delete", (req, res) => {
+  
+  delete urlDatabase[req.params.shortURL];
+  
+  res.redirect(`/urls`);
+  
+});
+
 
 
 function generateRandomString() {
