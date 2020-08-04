@@ -40,36 +40,66 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  //console.log(templateVars);
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  const longURLWebSite = urlDatabase[req.params.shortURL];
+  res.redirect(longURLWebSite);
 });
 
+//POST request creates a short URL
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
   
   let longURL = req.body.longURL;
   let shortURL = generateRandomString();
   
   urlDatabase[shortURL] = longURL;
   
-  //res.send("Ok");
-  res.redirect(`/urls/${shortURL}`);        // Respond with 'Ok' (we will replace this)
+  console.log(`Created ShortURL --> ${shortURL} for ${req.body.longURL}`);  // Log the POST request body to the console
+
+  res.redirect(`/urls/${shortURL}`);        
   
 });
 
+//POST request for delete button
 app.post("/urls/:shortURL/delete", (req, res) => {
-  
+
+  console.log(`Deleted ShortURL --> ${req.params.shortURL}`);
+
   delete urlDatabase[req.params.shortURL];
-  
+
+
   res.redirect(`/urls`);
   
 });
 
+//POST request for Edit button
+app.post("/urls/:shortURL/edit", (req, res) => {
 
+  let shortURL = req.params.shortURL;
+
+  console.log(`To Edit ShortURL --> ${shortURL}`);
+  
+  res.redirect(`/urls/${shortURL}`);
+  
+});
+
+//POST request for submit EDIT button
+app.post("/urls/:shortURL/submit", (req, res) => {
+
+  let shortURL = req.params.shortURL;
+  let longURL = req.body.longURL;
+
+  urlDatabase[shortURL] = longURL;
+
+  console.log(`Edited ShortURL --> ${shortURL} to ${req.body.longURL}`);
+
+  res.redirect(`/urls/${shortURL}`); 
+
+  
+});
 
 function generateRandomString() {
   return Math.random().toString(36).substring(2,8);
