@@ -7,6 +7,19 @@ app.set("view engine", "ejs");
 
 const urlDatabase = {};
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -29,6 +42,17 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+
+//REGISTER form request 
+app.get("/register", (req, res) => {
+  // console.log('Cookie Request -->',req.cookies)
+  let templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase
+  };
+  res.render("register", templateVars);
 });
 
 app.get("/urls", (req, res) => {
@@ -126,6 +150,22 @@ app.post("/logout", (req,res) => {
   res.clearCookie('username');
 
   res.redirect('/urls');
+});
+
+//Register
+app.post("/register", (req, res) => {
+
+  
+
+  // let longURL = req.body.longURL;
+  // let shortURL = generateRandomString();
+  
+  // urlDatabase[shortURL] = longURL;
+  
+  // console.log(`Created ShortURL --> ${shortURL} for ${req.body.longURL}`);  // Log the POST request body to the console
+
+  res.redirect(`/urls`);        
+  
 });
 
 function generateRandomString() {
