@@ -5,9 +5,18 @@ const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
 
+const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
+
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser())
+
+
+
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca"},
+  "9sm5xK": {longURL: "http://www.google.com"}
 };
 
 const users = { 
@@ -23,11 +32,6 @@ const users = {
   }
 }
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
-
-const cookieParser = require('cookie-parser');
-app.use(cookieParser())
 
 
 
@@ -42,7 +46,12 @@ app.listen(PORT, () => {
 //--------------------------------------------------------------------------------------------
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+
+  if(!req.cookies["user_id"]) {
+    res.redirect("/login");
+  }
+  
+  res.redirect("/urls");
 });
 
 app.get("/hello", (req, res) => {
@@ -57,14 +66,24 @@ app.get("/urls.json", (req, res) => {
 
 //INDEX -------------------------------- RENDER ----------------------------------------------
 app.get("/urls", (req, res) => {
-  // console.log('Cookie Request -->',req.cookies)
-  let templateVars = {
-    username: req.cookies["user_id"],
-    urls: urlDatabase
-  };
-
-  // console.log('Cookie Request ON INDEX-->',JSON.stringify(templateVars));
-  res.render("urls_index", templateVars);
+  
+  if(req.cookies["user_id"]) {  
+    let data = fetchID(urlDatabase, req.cookies["user_id"].id);
+    
+    let templateVars = {
+      username: req.cookies["user_id"],
+      urls: data
+    };
+    // console.log('Cookie Request ON INDEX-->',JSON.stringify(templateVars));
+    res.render("urls_index", templateVars);
+  } else {
+    
+    let templateVars = {
+      username: req.cookies["user_id"],
+      urls: urlDatabase
+    };
+    res.render("urls_index", templateVars);
+  }
 });
 
 
@@ -75,6 +94,9 @@ app.get("/urls/new", (req, res) => {
     urls: urlDatabase
   };
 
+  if(!req.cookies["user_id"]) {
+    res.redirect("/login");
+  }
   res.render("urls_new", templateVars);
 });
 
@@ -83,7 +105,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     username: req.cookies["user_id"],
     urls: urlDatabase
     };
@@ -132,14 +154,19 @@ app.get("/login", (req, res) => {
 
 //CREATE SHORTURL ----------------------------------------------------------------------------
 app.post("/urls", (req, res) => {
-  console.log(`${req.body}`);
+  // console.log(`${req.body}`);
   let longURL = req.body.longURL;
   let shortURL = generateRandomString();
+  let userID = req.cookies["user_id"].id;
   
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = {
+    longURL,
+    userID
+  };
   
-  console.log(`Created ShortURL --> ${shortURL} for ${req.body.longURL}`);  // Log the POST request body to the console
-
+  console.log(`Created ShortURL --> ${shortURL} --FOR-- ${longURL} --BY-- ${userID}`);  // Log the POST request body to the console
+  console.log(shortURL,"-->",urlDatabase[shortURL]);
+  console.log('DATABASE -->',urlDatabase);
   res.redirect(`/urls/${shortURL}`);        
   
 });
@@ -161,22 +188,27 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 
   let shortURL = req.params.shortURL;
 
-  console.log(`To Edit ShortURL --> ${shortURL}`);
-  
   res.redirect(`/urls/${shortURL}`);
   
 });
 
 //EDIT SHORTURL -- COMMIT ----------------------------------------------------------------------
 app.post("/urls/:shortURL/submit", (req, res) => {
-
+  
+  if(!req.cookies["user_id"]) {
+    res.redirect("/login");
+  }
   let shortURL = req.params.shortURL;
   let longURL = req.body.longURL;
+  let userID = req.cookies["user_id"].id;
 
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = {
+    longURL,
+    userID
+  };
 
-  console.log(`Edited ShortURL --> ${shortURL} to ${req.body.longURL}`);
-
+  console.log(`Edited ShortURL --> ${shortURL} to ${JSON.stringify(urlDatabase[shortURL])}`);
+  
   res.redirect(`/urls/${shortURL}`); 
 });
 
@@ -267,3 +299,16 @@ function authenticateUser(usersObj, refEmail, refPassword){
    }
   return false;
 };
+
+function fetchID(usersObj, refID) {
+  let tempObj = {};
+  
+  for (let i in usersObj){
+    if (usersObj[i].userID === refID) {
+    
+      tempObj[i] = usersObj[i];
+
+     }
+   }
+  return tempObj;
+}
