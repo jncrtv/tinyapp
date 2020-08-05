@@ -96,9 +96,23 @@ app.get("/register", (req, res) => {
     urls: urlDatabase
   };
 
-  // console.log('Cookie Request REGISTER -->',templateVars)
+  console.log('Cookie Request REGISTER -->',templateVars)
   res.render("register", templateVars);
 });
+
+//LOGIN form request 
+app.get("/login", (req, res) => {
+  // console.log('Cookie Request -->',req.cookies)
+  let templateVars = {
+    username: req.cookies,
+    urls: urlDatabase
+  };
+
+  // console.log('Cookie Request REGISTER -->',templateVars)
+  res.render("login", templateVars);
+});
+
+
 
 //POST request creates a short URL
 app.post("/urls", (req, res) => {
@@ -181,7 +195,7 @@ app.post("/register", (req, res) => {
   if (email === '' || password === ''){
     res.status(400).send('fields cannot be left blank! STATUS CODE 400');
   }
-  
+
   emailInUsers(users, email, () => {
     res.status(400).send('Email already in use! STATUS CODE 400');
   })
