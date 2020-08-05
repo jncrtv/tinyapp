@@ -30,25 +30,32 @@ const cookieParser = require('cookie-parser');
 app.use(cookieParser())
 
 
-//
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+
+
+//--------------------------------------------------------------------------------------------
+//-------------------------------- GET REQUESTS ----------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+app.get("/", (req, res) => {
+  res.send("Hello!");
 });
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
+//JSON OBJECT -------------------------- RENDER ----------------------------------------------
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
  
 
-//Renders INDEX FILE
+//INDEX -------------------------------- RENDER ----------------------------------------------
 app.get("/urls", (req, res) => {
   // console.log('Cookie Request -->',req.cookies)
   let templateVars = {
@@ -61,7 +68,7 @@ app.get("/urls", (req, res) => {
 });
 
 
-
+//CREATE NEW URL ----------------------- RENDER ----------------------------------------------
 app.get("/urls/new", (req, res) => {
   let templateVars = {
     username: req.cookies["user_id"],
@@ -71,6 +78,8 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+
+//SHORTURL ----------------------------- RENDER ----------------------------------------------
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL, 
@@ -83,12 +92,14 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+
 app.get("/u/:shortURL", (req, res) => {
   const longURLWebSite = urlDatabase[req.params.shortURL];
   res.redirect(longURLWebSite);
 });
 
-//REGISTER form request 
+
+//REGISTER ----------------------------- RENDER ----------------------------------------------
 app.get("/register", (req, res) => {
   // console.log('Cookie Request -->',req.cookies)
   let templateVars = {
@@ -100,21 +111,26 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
-//LOGIN form request 
+
+//LOGIN -------------------------------- RENDER ----------------------------------------------
 app.get("/login", (req, res) => {
-  // console.log('Cookie Request -->',req.cookies)
+
   let templateVars = {
     username: req.cookies,
     urls: urlDatabase
   };
 
-  // console.log('Cookie Request REGISTER -->',templateVars)
   res.render("login", templateVars);
 });
 
 
 
-//POST request creates a short URL
+//--------------------------------------------------------------------------------------------
+//------------------------------  POST REQUESTS ----------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+
+//CREATE SHORTURL ----------------------------------------------------------------------------
 app.post("/urls", (req, res) => {
   console.log(`${req.body}`);
   let longURL = req.body.longURL;
@@ -128,7 +144,7 @@ app.post("/urls", (req, res) => {
   
 });
 
-//POST request for delete button
+//DELETE SHORTURL -----------------------------------------------------------------------------
 app.post("/urls/:shortURL/delete", (req, res) => {
 
   console.log(`Deleted ShortURL --> ${req.params.shortURL}`);
@@ -140,7 +156,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   
 });
 
-//POST request for Edit button
+//EDIT SHORTURL -- REDIRECT --------------------------------------------------------------------
 app.post("/urls/:shortURL/edit", (req, res) => {
 
   let shortURL = req.params.shortURL;
@@ -151,7 +167,7 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   
 });
 
-//POST request for submit EDIT button
+//EDIT SHORTURL -- COMMIT ----------------------------------------------------------------------
 app.post("/urls/:shortURL/submit", (req, res) => {
 
   let shortURL = req.params.shortURL;
@@ -164,18 +180,30 @@ app.post("/urls/:shortURL/submit", (req, res) => {
   res.redirect(`/urls/${shortURL}`); 
 });
 
-//POST request for Login submit button
-app.post("/login", (req,res) => {
-  console.log(req.body);
-  let { user_id } = req.body;
 
-  console.log(`Username is --> ${user_id}`);
+//LOGIN ---------------------------------------------------------------------------------------
+app.post("/login", (req,res) => {
+
+  let email = req.body.email;
+  let password = req.body.password;
+  
+  if (email === '' || password === ''){
+    res.sendStatus(400);
+  }
+  
+  if (authenticateUser(users, email, password)) {
+    let userIndex = authenticateUser(users, email, password);
+    res.cookie('user_id', users[userIndex]);
+    console.log(users[userIndex]);
+  } else {
+    res.sendStatus(403);
+  }
 
   res.redirect('/urls');
 });
 
 
-//LOGOUT
+//LOGOUT ---------------------------------------------------------------------------------------
 app.post("/logout", (req,res) => {
 
   console.log(`Delete username cookie --> ${JSON.stringify(req.cookies["user_id"])}`);
@@ -185,43 +213,57 @@ app.post("/logout", (req,res) => {
   res.redirect('/urls');
 });
 
-//Register
+//REGISTER -------------------------------------------------------------------------------------
 app.post("/register", (req, res) => {
 
   let id = generateRandomString();
+  
   let email = req.body.email;
   let password = req.body.password;
 
   if (email === '' || password === ''){
-    res.status(400).send('fields cannot be left blank! STATUS CODE 400');
+    res.sendStatus(400);
   }
 
-  emailInUsers(users, email, () => {
-    res.status(400).send('Email already in use! STATUS CODE 400');
-  })
+  if(emailInUsers(users, email)) {
+    res.sendStatus(400);
+  } 
 
   users[id] = {
     id,
     email,
     password
   };
-  console.log(users);
+  
   res.cookie('user_id', users[id]);
-
-  // console.log('EMAIL -->', email, 'PASS -->', password);
-  // console.log('USERS -->', users);
-
+  
   res.redirect(`/urls`);        
 });
 
+
+
+
+//FUNCTIONS -------------------------------------------------------------------------------
 function generateRandomString() {
   return Math.random().toString(36).substring(2,8);
 };
 
-function emailInUsers(usersObj, refEmail, callback) {
+function emailInUsers(usersObj, refEmail) {
   for (let i in usersObj){
     if (usersObj[i].email === refEmail) {
-      callback();
+      return true;
     }
   };
+  return false;
+};
+
+function authenticateUser(usersObj, refEmail, refPassword){
+  for (let i in usersObj){
+    if (usersObj[i].email === refEmail) {
+      if(usersObj[i].password === refPassword) {
+          return i;
+        }
+     }
+   }
+  return false;
 };
