@@ -68,7 +68,7 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   
   if(req.cookies["user_id"]) {  
-    let data = fetchID(urlDatabase, req.cookies["user_id"].id);
+    let data = urlsForUser(req.cookies["user_id"].id);
     
     let templateVars = {
       username: req.cookies["user_id"],
@@ -101,24 +101,36 @@ app.get("/urls/new", (req, res) => {
 });
 
 
+
 //SHORTURL ----------------------------- RENDER ----------------------------------------------
 app.get("/urls/:shortURL", (req, res) => {
+
+  let shortURL = req.params.shortURL;
+  let loggedUserURLS = urlsForUser(req.cookies["user_id"].id);
+  let flag = false;
+
+  if (shortURLinUsers(loggedUserURLS, shortURL)) {
+    flag = true;
+  }
+
   let templateVars = {
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL].longURL,
     username: req.cookies["user_id"],
-    urls: urlDatabase
-    };
+    urls: urlDatabase,
+    flag: flag
+  };
   
-  //console.log(templateVars);
   res.render("urls_show", templateVars);
 });
 
 
+//SHORT FORM URL -------------------------
 app.get("/u/:shortURL", (req, res) => {
   const longURLWebSite = urlDatabase[req.params.shortURL];
   res.redirect(longURLWebSite);
 });
+
 
 
 //REGISTER ----------------------------- RENDER ----------------------------------------------
@@ -174,13 +186,22 @@ app.post("/urls", (req, res) => {
 //DELETE SHORTURL -----------------------------------------------------------------------------
 app.post("/urls/:shortURL/delete", (req, res) => {
 
-  console.log(`Deleted ShortURL --> ${req.params.shortURL}`);
+  if(!req.cookies["user_id"]) {
+    res.redirect("/login");
+  }
 
-  delete urlDatabase[req.params.shortURL];
+  let shortURL = req.params.shortURL;
+  let loggedUserURLS = urlsForUser(req.cookies["user_id"].id);
+  let flag = false;
 
-
-  res.redirect(`/urls`);
+  if (shortURLinUsers(loggedUserURLS, shortURL)) {
+    
+    console.log(`Deleted ShortURL --> ${req.params.shortURL}`);
   
+    delete urlDatabase[req.params.shortURL];
+  }
+  
+  res.redirect(`/urls`);
 });
 
 //EDIT SHORTURL -- REDIRECT --------------------------------------------------------------------
@@ -289,6 +310,16 @@ function emailInUsers(usersObj, refEmail) {
   return false;
 };
 
+function shortURLinUsers(usersObj, refShortURL) {
+  for (let i in usersObj){
+    if (i === refShortURL) {
+      console.log(usersObj[i],'  ===?  ', refShortURL)
+      return true;
+    }
+  };
+  return false;
+};
+
 function authenticateUser(usersObj, refEmail, refPassword){
   for (let i in usersObj){
     if (usersObj[i].email === refEmail) {
@@ -300,15 +331,17 @@ function authenticateUser(usersObj, refEmail, refPassword){
   return false;
 };
 
-function fetchID(usersObj, refID) {
+function urlsForUser(id) {
   let tempObj = {};
   
-  for (let i in usersObj){
-    if (usersObj[i].userID === refID) {
+  for (let i in urlDatabase){
+    if (urlDatabase[i].userID === id) {
     
-      tempObj[i] = usersObj[i];
-
-     }
+      tempObj[i] = urlDatabase[i];
+      
+    }
    }
+   console.log(tempObj);
   return tempObj;
 }
+
