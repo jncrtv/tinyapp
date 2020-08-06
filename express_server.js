@@ -7,10 +7,10 @@ app.set("view engine", "ejs");
 
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser())
-
+app.use(cookieParser());
 
 
 
@@ -277,7 +277,7 @@ app.post("/register", (req, res) => {
   let id = generateRandomString();
   
   let email = req.body.email;
-  let password = req.body.password;
+  let password = bcrypt.hashSync(req.body.password,10);
 
   if (email === '' || password === ''){
     res.sendStatus(400);
@@ -328,7 +328,7 @@ function shortURLinUsers(usersObj, refShortURL) {
 function authenticateUser(usersObj, refEmail, refPassword){
   for (let i in usersObj){
     if (usersObj[i].email === refEmail) {
-      if(usersObj[i].password === refPassword) {
+      if(bcrypt.compareSync(refPassword, usersObj[i].password)) {
           return i;
         }
      }
