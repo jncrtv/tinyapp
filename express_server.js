@@ -192,7 +192,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
   let shortURL = req.params.shortURL;
   let loggedUserURLS = urlsForUser(req.cookies["user_id"].id);
-  let flag = false;
 
   if (shortURLinUsers(loggedUserURLS, shortURL)) {
     
@@ -219,16 +218,22 @@ app.post("/urls/:shortURL/submit", (req, res) => {
   if(!req.cookies["user_id"]) {
     res.redirect("/login");
   }
+  
   let shortURL = req.params.shortURL;
   let longURL = req.body.longURL;
   let userID = req.cookies["user_id"].id;
 
-  urlDatabase[shortURL] = {
-    longURL,
-    userID
-  };
+  let loggedUserURLS = urlsForUser(req.cookies["user_id"].id);
 
-  console.log(`Edited ShortURL --> ${shortURL} to ${JSON.stringify(urlDatabase[shortURL])}`);
+  if (shortURLinUsers(loggedUserURLS, shortURL)) {
+    
+    urlDatabase[shortURL] = {
+      longURL,
+      userID
+    };
+  
+    console.log(`Edited ShortURL --> ${shortURL} to ${JSON.stringify(urlDatabase[shortURL])}`);
+  }
   
   res.redirect(`/urls/${shortURL}`); 
 });
