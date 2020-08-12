@@ -19,8 +19,6 @@ const {
   urlsForUser
 } = require("./helpers");
 
-
-
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(cookieParser());
@@ -49,9 +47,6 @@ const users = {
     password: "dishwasher-funk"
   }
 };
-
-
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -124,23 +119,41 @@ app.get("/urls/new", (req, res) => {
 //SHORTURL ----------------------------- RENDER ----------------------------------------------
 app.get("/urls/:shortURL", (req, res) => {
 
-  let shortURL = req.params.shortURL;
-  let loggedUserURLS = urlsForUser(urlDatabase,req.session.user_id.id);
-  let flag = false;
+  if (!req.session.user_id) {
+    
+    let shortURL = req.params.shortURL;
+   
 
-  if (shortURLinUsers(loggedUserURLS, shortURL)) {
-    flag = true;
-  }
-
-  let templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    username: req.session.user_id,
-    urls: urlDatabase,
-    flag: flag
-  };
+    let templateVars = {
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL,
+      username: null,
+      urls: urlDatabase,
+      flag: true
+    };
   
-  res.render("urls_show", templateVars);
+    res.render("urls_show", templateVars);
+    
+  } else {
+
+    let shortURL = req.params.shortURL;
+    let loggedUserURLS = urlsForUser(urlDatabase,req.session.user_id.id);
+    let flag = false;
+
+    if (shortURLinUsers(loggedUserURLS, shortURL)) {
+      flag = true;
+    }
+
+    let templateVars = {
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL,
+      username: req.session.user_id,
+      urls: urlDatabase,
+      flag: flag
+    };
+    
+    res.render("urls_show", templateVars);
+  }
 });
 
 

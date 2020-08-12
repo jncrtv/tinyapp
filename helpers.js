@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 
 //HELPER FUNCTIONS --------------------------------------------------------------------
+
 function generateRandomString() {
   return Math.random().toString(36).substring(2,8);
 }
@@ -22,19 +23,6 @@ function shortURLinUsers(usersObj, refShortURL) {
   }
   return false;
 }
-
-
-// function authenticateUser(usersObj, refEmail, refPassword){
-//   for (let i in usersObj){
-//     if (usersObj[i].email === refEmail) {
-//       if(bcrypt.compareSync(refPassword, usersObj[i].password)) {
-//           return i;
-//         }
-//      }
-//    }
-//   return false;
-// };
-
 
 function authenticateUser(usersObj, refEmail, refPassword) {
 
