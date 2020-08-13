@@ -66,7 +66,7 @@ app.get("/", (req, res) => {
   }
   
   res.redirect("/urls");
-  
+
 });
 
 app.get("/hello", (req, res) => {
@@ -156,10 +156,10 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //SHORT FORM URL -------------------------
 app.get("/u/:shortURL", (req, res) => {
-  // const longURLWebSite = urlDatabase[req.params.shortURL];
-let shortURL = req.params.shortURL;
-
-  res.redirect(`/urls/${shortURL}`);
+  
+  const longURLWebSite = urlDatabase[req.params.shortURL].longURL;
+  
+  res.redirect(`${longURLWebSite}`);
 });
 
 
